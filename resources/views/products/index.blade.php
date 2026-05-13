@@ -43,7 +43,6 @@
         }
 
         .btn-edit { min-width: 70px; }
-        .edit-inputs input { font-size: .875rem; }
 
         #alert-box {
             position: fixed;
@@ -162,7 +161,6 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 
-    // ── Flash alert ──────────────────────────────────────────────────────────
     function showAlert(message, type = 'success') {
         const box = document.getElementById('alert-box');
         box.innerHTML = `
@@ -176,7 +174,6 @@
         }, 3500);
     }
 
-    // ── Render table from JSON response ──────────────────────────────────────
     function renderTable(products, grandTotal) {
         const tbody = document.getElementById('products-body');
         const countBadge = document.getElementById('product-count');
@@ -201,7 +198,7 @@
             tbody.insertAdjacentHTML('beforeend', buildRow(p));
         });
 
-        const total = (grandTotal).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        const total = grandTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
         if (!tfoot) {
             tfoot = document.createElement('tfoot');
@@ -219,16 +216,14 @@
         attachEditHandlers();
     }
 
-    // ── Build a single row HTML ───────────────────────────────────────────────
     function buildRow(p) {
         const rowTotal = (p.quantity * p.price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-        const price    = parseFloat(p.price).toFixed(2);
+        const price = parseFloat(p.price).toFixed(2);
         return `
-        <tr data-id="${p.id}" data-name="${escHtml(p.name)}"
-            data-quantity="${p.quantity}" data-price="${price}">
-            <td class="cell-name">${escHtml(p.name)}</td>
-            <td class="cell-quantity text-end">${p.quantity}</td>
-            <td class="cell-price text-end">$${price}</td>
+        <tr data-id="${p.id}" data-name="${escHtml(p.name)}" data-quantity="${p.quantity}" data-price="${price}">
+            <td>${escHtml(p.name)}</td>
+            <td class="text-end">${p.quantity}</td>
+            <td class="text-end">$${price}</td>
             <td>${p.created_at}</td>
             <td class="text-end">$${rowTotal}</td>
             <td class="text-center">
@@ -239,7 +234,6 @@
         </tr>`;
     }
 
-    // ── Escape HTML to prevent XSS ───────────────────────────────────────────
     function escHtml(str) {
         return String(str)
             .replace(/&/g, '&amp;')
@@ -248,23 +242,22 @@
             .replace(/"/g, '&quot;');
     }
 
-    // ── Submit new product ────────────────────────────────────────────────────
     document.getElementById('product-form').addEventListener('submit', function (e) {
         e.preventDefault();
         clearErrors();
 
-        const submitBtn  = document.getElementById('submit-btn');
+        const submitBtn = document.getElementById('submit-btn');
         const submitText = document.getElementById('submit-text');
-        const spinner    = document.getElementById('submit-spinner');
+        const spinner = document.getElementById('submit-spinner');
 
         submitBtn.disabled = true;
         submitText.textContent = 'Saving…';
         spinner.classList.remove('d-none');
 
         const payload = {
-            name:     document.getElementById('name').value.trim(),
+            name: document.getElementById('name').value.trim(),
             quantity: document.getElementById('quantity').value,
-            price:    document.getElementById('price').value,
+            price: document.getElementById('price').value
         };
 
         axios.post('/products', payload)
@@ -287,21 +280,19 @@
             });
     });
 
-    // ── Inline row editing ────────────────────────────────────────────────────
     function attachEditHandlers() {
         document.querySelectorAll('.btn-edit').forEach(btn => {
             btn.addEventListener('click', function () {
-                const row = this.closest('tr');
-                enterEditMode(row);
+                enterEditMode(this.closest('tr'));
             });
         });
     }
 
     function enterEditMode(row) {
-        const id       = row.dataset.id;
-        const name     = row.dataset.name;
+        const id = row.dataset.id;
+        const name = row.dataset.name;
         const quantity = row.dataset.quantity;
-        const price    = row.dataset.price;
+        const price = row.dataset.price;
 
         row.innerHTML = `
             <td><input type="text" class="form-control form-control-sm" id="edit-name" value="${escHtml(name)}" required></td>
@@ -318,38 +309,33 @@
             </td>`;
 
         row.querySelector('.btn-save').addEventListener('click', () => saveRow(row, id));
-        row.querySelector('.btn-cancel').addEventListener('click', () => {
-            row.querySelector('#edit-name').value     = name;
-            row.querySelector('#edit-quantity').value = quantity;
-            row.querySelector('#edit-price').value    = price;
-            reloadPage();
-        });
+        row.querySelector('.btn-cancel').addEventListener('click', () => reloadPage());
     }
 
     function saveRow(row, id) {
         const payload = {
-            name:     row.querySelector('#edit-name').value.trim(),
+            name: row.querySelector('#edit-name').value.trim(),
             quantity: row.querySelector('#edit-quantity').value,
-            price:    row.querySelector('#edit-price').value,
+            price: row.querySelector('#edit-price').value
         };
 
         axios.put(`/products/${id}`, payload)
             .then(res => {
                 renderTable(res.data.products, res.data.total);
-                showAlert('Product updated successfully.');
+                showAlert('Product updated.');
             })
-            .catch(err => {
+            .catch(() => {
                 showAlert('Could not save changes. Please check your input.', 'danger');
             });
     }
 
-    function reloadPage() { window.location.reload(); }
+    function reloadPage() {
+        window.location.reload();
+    }
 
-    // ── Validation error display ──────────────────────────────────────────────
     function showValidationErrors(errors) {
-        const fields = { name: 'name', quantity: 'quantity', price: 'price' };
         for (const [field, messages] of Object.entries(errors)) {
-            const input = document.getElementById(fields[field]);
+            const input = document.getElementById(field);
             if (input) {
                 input.classList.add('is-invalid');
                 input.nextElementSibling.textContent = messages[0];
@@ -361,7 +347,6 @@
         document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
     }
 
-    // ── Init on page load ─────────────────────────────────────────────────────
     attachEditHandlers();
 </script>
 </body>

@@ -31,10 +31,10 @@ class ProductController extends Controller
         $products = $this->readProducts();
 
         $products[] = [
-            'id'         => (string) Str::uuid(),
-            'name'       => $data['name'],
-            'quantity'   => (int) $data['quantity'],
-            'price'      => (float) $data['price'],
+            'id' => (string) Str::uuid(),
+            'name' => $data['name'],
+            'quantity' => (int) $data['quantity'],
+            'price' => (float) $data['price'],
             'created_at' => now()->format('Y-m-d H:i:s'),
         ];
 
@@ -58,9 +58,9 @@ class ProductController extends Controller
 
         foreach ($products as &$product) {
             if ($product['id'] === $id) {
-                $product['name']     = $data['name'];
+                $product['name'] = $data['name'];
                 $product['quantity'] = (int) $data['quantity'];
-                $product['price']    = (float) $data['price'];
+                $product['price'] = (float) $data['price'];
                 break;
             }
         }
