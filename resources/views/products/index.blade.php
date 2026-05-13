@@ -331,10 +331,9 @@
             name:     row.querySelector('#edit-name').value.trim(),
             quantity: row.querySelector('#edit-quantity').value,
             price:    row.querySelector('#edit-price').value,
-            _method:  'PUT',
         };
 
-        axios.post(`/products/${id}`, payload)
+        axios.put(`/products/${id}`, payload)
             .then(res => {
                 renderTable(res.data.products, res.data.total);
                 showAlert('Product updated successfully.');
